@@ -38,6 +38,10 @@ describe.runIf(isServe)('main', () => {
     expect(await page.textContent('.named')).toBe(testJSON.msg)
   })
 
+  test('virtual svg module', async () => {
+    expect(await page.textContent('.virtual-svg')).toMatch('<svg')
+  })
+
   test('safe fetch', async () => {
     expect(await page.textContent('.safe-fetch')).toMatch('KEY=safe')
     expect(await page.textContent('.safe-fetch-status')).toBe('200')
@@ -477,5 +481,18 @@ describe.runIf(isServe)('invalid request', () => {
         '#/../../unsafe.txt',
     )
     expect(response).toContain('HTTP/1.1 400 Bad Request')
+  })
+
+  test('should deny request to denied file when a request has /.', async () => {
+    const response = await sendRawRequest(viteTestUrl, '/src/dummy.crt/.')
+    expect(response).toContain('HTTP/1.1 403 Forbidden')
+  })
+
+  test('should deny request with /@fs/ to denied file when a request has /.', async () => {
+    const response = await sendRawRequest(
+      viteTestUrl,
+      path.posix.join('/@fs/', root, 'root/src/dummy.crt/') + '.',
+    )
+    expect(response).toContain('HTTP/1.1 403 Forbidden')
   })
 })
